@@ -4,12 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, Mail, MapPin } from "lucide-react";
-import CommomImg from "@/components/CommonBackgroundImg";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useMailSendMutation } from "@/redux/features/shubamdevApi";
 import HeroImage from "@/components/HeroImage";
-import { Link } from "react-router-dom";
 
 export default function ContactForm() {
   const contactData = [
@@ -32,10 +30,10 @@ export default function ContactForm() {
 
   const onSubmit = async (data) => {
     const finalData = {
-      name: `${data.firstName} ${data.lastName}`,
-      email: data.email,
-      phone: data.phone,
-      message: data.message,
+      name: `${data.firstName.trim()} ${data.lastName.trim()}`,
+      email: data.email.trim(),
+      phone: data.phone.trim(),
+      message: data.message.trim(),
     };
 
     console.log(finalData);
@@ -53,13 +51,7 @@ export default function ContactForm() {
       <HeroImage />
 
       <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full px-4">
-        <h2
-          className="
-           text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl
-           font-serif italic font-bold tracking-wide text-white
-           drop-shadow-lg
-         "
-        >
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-serif italic font-bold tracking-wide text-white drop-shadow-lg">
           Contact Us
         </h2>
 
@@ -68,9 +60,7 @@ export default function ContactForm() {
             className="w-2 h-2 sm:w-3 sm:h-3 bg-white"
             style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }}
           ></div>
-
           <div className="h-[1px] sm:h-[2px] bg-white flex-grow mx-2"></div>
-
           <div
             className="w-2 h-2 sm:w-3 sm:h-3 bg-white"
             style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }}
@@ -99,6 +89,10 @@ export default function ContactForm() {
                 className="border-[#C29A2D] h-10 sm:h-12 w-full"
                 {...register("firstName", {
                   required: "First name is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "First name cannot be empty or just spaces",
+                  },
                 })}
               />
               {errors.firstName && (
@@ -113,7 +107,13 @@ export default function ContactForm() {
               <Input
                 placeholder="Enter your last name"
                 className="border-[#C29A2D] h-10 sm:h-12 w-full"
-                {...register("lastName", { required: "Last name is required" })}
+                {...register("lastName", {
+                  required: "Last name is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "Last name cannot be empty or just spaces",
+                  },
+                })}
               />
               {errors.lastName && (
                 <p className="text-red-500 text-xs sm:text-sm mt-1">
@@ -132,6 +132,10 @@ export default function ContactForm() {
               className="h-10 sm:h-12 border-[#C29A2D] w-full"
               {...register("email", {
                 required: "Email is required",
+                validate: {
+                  notEmpty: (value) =>
+                    value.trim() !== "" || "Email cannot be empty or just spaces",
+                },
                 pattern: {
                   value: /^\S+@\S+$/i,
                   message: "Enter a valid email",
@@ -155,6 +159,10 @@ export default function ContactForm() {
               maxLength={10}
               {...register("phone", {
                 required: "Phone number is required",
+                validate: {
+                  notEmpty: (value) =>
+                    value.trim() !== "" || "Phone number cannot be empty or just spaces",
+                },
                 pattern: {
                   value: /^[6-9]\d{9}$/,
                   message: "Enter valid 10-digit Indian phone number",
@@ -175,7 +183,13 @@ export default function ContactForm() {
               rows={5}
               placeholder="Enter your message"
               className="border-[#C29A2D] min-h-[100px] sm:min-h-[120px] w-full"
-              {...register("message", { required: "Message is required" })}
+              {...register("message", {
+                required: "Message is required",
+                validate: {
+                  notEmpty: (value) =>
+                    value.trim() !== "" || "Message cannot be empty or just spaces",
+                },
+              })}
             />
             {errors.message && (
               <p className="text-red-500 text-xs sm:text-sm mt-1">
@@ -207,21 +221,29 @@ export default function ContactForm() {
                   {item.icon}
                 </div>
 
-                <Link
-                  href={
-                    item.text === "Call : +91 9024 195 195"
-                      ? "tel:+919024195195"
-                      : item.text === "info@subhamdevelopers.com"
-                      ? "mailto:info@subhamdevelopers.com"
-                      : ""
-                  }
-                  className="flex items-center gap-1 px-2"
-                  rel="noopener noreferrer"
-                >
-                  <p className="text-xs sm:text-sm mb-3 sm:mb-5 break-words">
+                {item.text.includes("Call") ? (
+                  <a
+                    href="tel:+919024195195"
+                    className="flex items-center gap-1 px-2 hover:underline"
+                  >
+                    <p className="text-xs sm:text-sm mb-3 sm:mb-5 break-words">
+                      {item.text}
+                    </p>
+                  </a>
+                ) : item.text.includes("@") ? (
+                  <a
+                    href="mailto:info@subhamdevelopers.com"
+                    className="flex items-center gap-1 px-2 hover:underline"
+                  >
+                    <p className="text-xs sm:text-sm mb-3 sm:mb-5 break-words">
+                      {item.text}
+                    </p>
+                  </a>
+                ) : (
+                  <p className="text-xs sm:text-sm mb-3 sm:mb-5 break-words px-2">
                     {item.text}
                   </p>
-                </Link>
+                )}
               </CardContent>
             </Card>
           ))}

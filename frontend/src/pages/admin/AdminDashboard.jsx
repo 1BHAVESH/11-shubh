@@ -1,13 +1,17 @@
 import { Image, FolderKanban, TrendingUp, Eye } from "lucide-react";
-import { useGetBannersQuery, useGetProjectsQuery } from "@/redux/features/adminApi";
+import { useGetBannersQuery, useGetProjectsQuery, useGetViewAnalyticsQuery } from "@/redux/features/adminApi";
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { data: bannersData } = useGetBannersQuery();
   const { data: projectsData } = useGetProjectsQuery();
+  const { data: viewsData } = useGetViewAnalyticsQuery();
 
   const bannerCount = bannersData?.data?.length || 0;
   const projectCount = projectsData?.data?.length || 0;
+
+  // ⭐ Extract Website Views from API
+  const websiteViews = viewsData?.views?.websiteCount || 0;
 
   const stats = [
     {
@@ -23,18 +27,14 @@ export default function AdminDashboard() {
       color: "bg-green-500/20 text-green-400",
     },
     {
-      name: "Active Items",
-      value: bannerCount + projectCount,
-      icon: TrendingUp,
-      color: "bg-purple-500/20 text-purple-400",
-    },
-    {
       name: "Page Views",
-      value: "1.2K",
+      value: websiteViews, // ⭐ REAL DATA HERE
       icon: Eye,
       color: "bg-orange-500/20 text-orange-400",
     },
   ];
+
+  console.log(viewsData)
 
   return (
     <div className="space-y-8 pt-12 lg:pt-0">
@@ -63,18 +63,19 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Actions */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
           <div className="space-y-3">
             <Link
-              href="/admin/banners"
+              to="/admin/banners"
               className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <Image className="w-5 h-5 text-[#d4af37]" />
               <span className="text-white">Manage Banners</span>
             </Link>
             <Link
-              href="/admin/projects"
+              to="/admin/projects"
               className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <FolderKanban className="w-5 h-5 text-[#d4af37]" />
@@ -83,12 +84,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
-          <div className="space-y-3 text-zinc-400 text-sm">
-            <p>No recent activity to display.</p>
-          </div>
-        </div>
+        {/* Recent Activity */}
+     
       </div>
     </div>
   );

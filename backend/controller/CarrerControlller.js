@@ -107,6 +107,37 @@ export const updateCareer = async (req, res) => {
   }
 };
 
+export const deleteCareer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if job exists
+    const existingCareer = await Career.findById(id);
+
+    if (!existingCareer) {
+      return res.status(404).json({
+        status: false,
+        message: "Career not found",
+      });
+    }
+
+    // Delete the job
+    await Career.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      status: true,
+      message: "Career deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Delete Career Error:", error);
+
+    return res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
 
 

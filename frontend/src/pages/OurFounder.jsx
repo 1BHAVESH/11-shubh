@@ -2,6 +2,7 @@ import HeroImage from "@/components/HeroImage";
 import React from "react";
 import chairman from "../assets/chairman.png";
 import anirudh from "../assets/anirudh.jpg"
+import mahendra from "../assets/mahender-shubham-dev.jfif"
 import Contact from "@/components/Contact";
 
 const OurFounder = () => {
@@ -156,14 +157,14 @@ const OurFounder = () => {
             <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group">
               <div className="relative overflow-hidden">
                 <img
-                  src={chairman}
+                  src={mahendra}
                   alt="Mahendra Rakhecha"
-                  className="w-full h-[280px] object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-[400px] object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
 
-              <div className="p-6">
+              <div className="px-6 mt-[100px]">
                 <div className="mb-2">
                   <span className="text-xs font-semibold tracking-wider text-[#D2AB48] uppercase">
                     Finance Department

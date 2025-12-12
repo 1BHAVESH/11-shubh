@@ -2,7 +2,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import { Pagination, Autoplay } from "swiper/modules";
-import { useGetBannersQuery } from "@/redux/features/adminApi";
+import { useGetBannersQuery, useGetGeneralSettingQueryQuery } from "@/redux/features/adminApi";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 
@@ -15,17 +15,35 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Link, Links, useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import EnquiryDialog from "./EnquiryDialog";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
 import { Separator } from "./ui/separator";
 
 const BASE_URL = "http://localhost:3001";
 
-export default function HeroImage({visible, setVisible}) {
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+
+export default function HeroImage({ visible, setVisible }) {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: bannersData, isLoading } = useGetBannersQuery();
+  const { data: genralData, isSuccess: genralDataIsSuccess, isLoading:genralDataIsLoading } = useGetGeneralSettingQueryQuery();
+
   const banners = bannersData?.data || [];
 
   if (isLoading) {
@@ -33,6 +51,8 @@ export default function HeroImage({visible, setVisible}) {
       <section className="w-full h-[270px] lg:h-[501px] bg-gray-200 animate-pulse" />
     );
   }
+
+  console.log(genralData)
 
   if (banners.length === 0) return null;
 
@@ -42,7 +62,6 @@ export default function HeroImage({visible, setVisible}) {
       <nav className="absolute top-0 left-0 right-0 z-10 bg-transparent">
         <div className="container mx-auto md:mr-5 px-5 py-4 lg:py-6">
           <div className="flex items-center justify-between lg:justify-between w-full md:max-w-[1370px]">
-            
             {/* LEFT SIDE - Desktop Navigation */}
             <div className="hidden cursor-pointer lg:flex items-center gap-6 ">
               {/* ABOUT - ShadCN Dropdown */}
@@ -83,7 +102,7 @@ export default function HeroImage({visible, setVisible}) {
               >
                 Contact
               </Link>
-               <Link
+              <Link
                 to="/projects"
                 className="text-white text-sm lg:text-base font-medium hover:opacity-80 transition-opacity"
               >
@@ -91,11 +110,11 @@ export default function HeroImage({visible, setVisible}) {
               </Link>
             </div>
 
-            {/* CENTER - LOGO */}
+            {/* CENTER - LOGO   src={`${API_URL}/${genralData?.data?.logo}`} */}
             <div className="flex-1 flex justify-center lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2">
               <Link to="/" className="text-white text-xl lg:text-2xl font-bold">
                 <img
-                  src="./SHUBHAM DEVELOPER LOGO.png"
+                  src={`${API_URL}/${genralData?.data?.logo}`}
                   alt="Shubham Developer Logo"
                   className="w-[120px] sm:w-[150px] lg:w-[200px] mt-2 lg:mt-8"
                 />
@@ -106,7 +125,6 @@ export default function HeroImage({visible, setVisible}) {
             <div className="flex items-center gap-6 lg:gap-8">
               {/* Desktop Navigation */}
               <ul className="hidden lg:flex gap-6 lg:gap-8">
-                
                 <li>
                   <Link
                     to="/join-venture"
@@ -140,10 +158,13 @@ export default function HeroImage({visible, setVisible}) {
               </ul>
 
               {/* Mobile Menu Button */}
-              <Sheet open={mobileMenuOpen} onOpenChange={(open) => {
-                setMobileMenuOpen(open);
-                setVisible(!open);
-              }}>
+              <Sheet
+                open={mobileMenuOpen}
+                onOpenChange={(open) => {
+                  setMobileMenuOpen(open);
+                  setVisible(!open);
+                }}
+              >
                 <SheetTrigger asChild>
                   <button
                     className="lg:hidden text-white z-20"
@@ -182,7 +203,9 @@ export default function HeroImage({visible, setVisible}) {
 
                     {/* About Section in Mobile */}
                     <li className="border-b border-gray-200 pb-2">
-                      <div className="pl-4 py-3 font-semibold text-gray-700">About us</div>
+                      <div className="pl-4 py-3 font-semibold text-gray-700">
+                        About us
+                      </div>
                       <ul className="pl-8 space-y-2">
                         <li>
                           <Link

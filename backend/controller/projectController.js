@@ -73,6 +73,8 @@ export const createProject = async (req, res) => {
       amenityIconIndexes,
     } = req.body;
 
+    console.log(amenities)
+
     const projectTitle = name || title;
 
     if (!req.files || !req.files.image) {
@@ -404,5 +406,38 @@ export const getProjectTtile = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Server error", error });
+  }
+};
+
+
+export const toggleProjectStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const project = await Project.findById(id);
+
+    if (!project) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
+    }
+
+    // Toggle value
+    project.isActive = !project.isActive;
+
+    const updated = await project.save();
+
+    res.status(200).json({
+      success: project.isActive,
+      message: `Project ${updated.isActive ? "Activated" : "Deactivated"} successfully`,
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Toggle Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while toggling status",
+      error,
+    });
   }
 };

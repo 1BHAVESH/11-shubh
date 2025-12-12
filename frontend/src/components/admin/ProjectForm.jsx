@@ -1,6 +1,6 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { useEffect, useState } from "react";
-import { Upload, X, FileText, Plus, Trash2, Video } from "lucide-react";
+import { Upload, X, FileText, Plus, Trash2, Video, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,44 @@ import {
 } from "@/redux/features/adminApi";
 import { toast } from "sonner";
 
+// Import your images
+import temple from "../../assets/temple.png";
+// import bedminton from "../../assets/bedminton.jpg";
+import swiming from "../../assets/swiming.png";
+import cycleTrack from "../../assets/cycleTrack.png";
+import walk from "../../assets/walk.png";
+import yoga from "../../assets/yoga.png";
+import gym from "../../assets/gym.png";
+import hall from "../../assets/Hall.png";
+import theater from "../../assets/theater.png";
+import carromBoard from "../../assets/carromBoard.png";
+import room from "../../assets/room.png";
+import poolTable from "../../assets/poolTable.png";
+import playground from "../../assets/playground.png";
+import park from "../../assets/park.png";
+import seniorCitizenArea from "../../assets/seniorCitizenArea.png";
+import BornFire from "../../assets/BornFire.png";
+
+// Predefined amenities with imported images
+const PREDEFINED_AMENITIES = [
+  { name: "Temple", image: temple },
+
+  { name: "Swimming Pool", image: swiming },
+  { name: "Cycle Track", image: cycleTrack },
+  { name: "Walking Track", image: walk },
+  { name: "Yoga Area", image: yoga },
+  { name: "Gym", image: gym },
+  { name: "Community Hall", image: hall },
+  { name: "Theater", image: theater },
+  { name: "Carrom Board", image: carromBoard },
+  { name: "Game Room", image: room },
+  { name: "Pool Table", image: poolTable },
+  { name: "Playground", image: playground },
+  { name: "Park", image: park },
+  { name: "Senior Citizen Area", image: seniorCitizenArea },
+  { name: "Bonfire Area", image: BornFire },
+];
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const getImageUrl = (url) => {
@@ -31,14 +69,19 @@ const getImageUrl = (url) => {
   return `${API_URL}${url}`;
 };
 
-export default function ProjectForm({ open, onOpenChange, project }) {
+const urlToFile = async (url, filename) => {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type });
+};
+
+export default function ProjectForm({ open, onOpenChange, project, length }) {
   const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
 
   // Image states
   const [deletedGalleryImages, setDeletedGalleryImages] = useState([]);
   const [existingGalleryImages, setExistingGalleryImages] = useState([]);
-
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -68,6 +111,14 @@ export default function ProjectForm({ open, onOpenChange, project }) {
   const [videoPreview, setVideoPreview] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [videoFileName, setVideoFileName] = useState(null);
+
+  // NEW: Predefined amenities selector states
+  const [selectedPredefinedAmenities, setSelectedPredefinedAmenities] =
+    useState([]);
+  const [showCustomAmenity, setShowCustomAmenity] = useState(false);
+  const [customAmenityName, setCustomAmenityName] = useState("");
+  const [customAmenityIcon, setCustomAmenityIcon] = useState(null);
+  const [customAmenityPreview, setCustomAmenityPreview] = useState(null);
 
   const isEditing = !!project;
   const isLoading = isCreating || isUpdating;
@@ -149,12 +200,10 @@ export default function ProjectForm({ open, onOpenChange, project }) {
       setFloorPlanPreview(getImageUrl(project.floorPlanImageUrl));
       setBuildingImagePreview(getImageUrl(project.buildingImageUrl));
 
-      // Store existing gallery images separately
       const existingGallery = project.galleryImages || [];
       setExistingGalleryImages(existingGallery);
       setGalleryPreviews(existingGallery.map(getImageUrl));
 
-      // Set amenity icon previews from existing data
       if (project.amenities && project.amenities.length > 0) {
         const iconPreviews = project.amenities.map((amenity) =>
           amenity.icon ? getImageUrl(amenity.icon) : null
@@ -194,6 +243,8 @@ export default function ProjectForm({ open, onOpenChange, project }) {
       resetAllPreviews();
     }
     resetAllSelectedFiles();
+    setSelectedPredefinedAmenities([]);
+    setShowCustomAmenity(false);
   }, [project, reset]);
 
   const resetAllPreviews = () => {
@@ -240,7 +291,6 @@ export default function ProjectForm({ open, onOpenChange, project }) {
   const handleAmenityIconChange = (e, index) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         toast.error("Please upload an image file");
         return;
@@ -290,26 +340,19 @@ export default function ProjectForm({ open, onOpenChange, project }) {
   };
 
   const removeGalleryImage = (index) => {
-    // Check if this is an existing image (from the project) or a newly added one
     const existingCount = existingGalleryImages.length;
 
     if (index < existingCount) {
-      // It's an existing image - track it for deletion
       const imageToDelete = existingGalleryImages[index];
       setDeletedGalleryImages((prev) => [...prev, imageToDelete]);
-      console.log("Marking for deletion:", imageToDelete);
-
-      // Remove from existing images array
       setExistingGalleryImages((prev) => prev.filter((_, i) => i !== index));
     } else {
-      // It's a newly added image - just remove from selected files
       const newImageIndex = index - existingCount;
       setSelectedGalleryImages((prev) =>
         prev.filter((_, i) => i !== newImageIndex)
       );
     }
 
-    // Remove from preview in both cases
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -326,7 +369,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
     if (file) {
       const maxSize = 200 * 1024 * 1024;
       if (file.size > maxSize) {
-        toast.error("Video file size must be less than 100MB");
+        toast.error("Video file size must be less than 200MB");
         e.target.value = null;
         return;
       }
@@ -371,6 +414,65 @@ export default function ProjectForm({ open, onOpenChange, project }) {
     setSelectedAmenityIcons((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // NEW: Toggle predefined amenity selection
+  const togglePredefinedAmenity = (amenity) => {
+    setSelectedPredefinedAmenities((prev) => {
+      const exists = prev.find((a) => a.name === amenity.name);
+      if (exists) {
+        return prev.filter((a) => a.name !== amenity.name);
+      } else {
+        return [...prev, amenity];
+      }
+    });
+  };
+
+  // NEW: Handle custom amenity icon upload
+  const handleCustomAmenityIconChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+      setCustomAmenityIcon(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setCustomAmenityPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // NEW: Add custom amenity to predefined list
+  const addCustomPredefinedAmenity = () => {
+    if (!customAmenityName.trim()) {
+      toast.error("Please enter amenity name");
+      return;
+    }
+    if (!customAmenityIcon) {
+      toast.error("Please upload an icon");
+      return;
+    }
+
+    const customAmenity = {
+      name: customAmenityName,
+      image: customAmenityPreview,
+      isCustom: true,
+      customFile: customAmenityIcon,
+    };
+
+    setSelectedPredefinedAmenities((prev) => [...prev, customAmenity]);
+    setCustomAmenityName("");
+    setCustomAmenityIcon(null);
+    setCustomAmenityPreview(null);
+    setShowCustomAmenity(false);
+  };
+
+  // NEW: Remove predefined amenity
+  const removePredefinedAmenity = (amenityName) => {
+    setSelectedPredefinedAmenities((prev) =>
+      prev.filter((a) => a.name !== amenityName)
+    );
+  };
+
   const onSubmit = async (data) => {
     try {
       const formData = new FormData();
@@ -392,8 +494,63 @@ export default function ProjectForm({ open, onOpenChange, project }) {
       formData.append("isFeatured", data.isFeatured);
       formData.append("order", data.order);
 
-      // Filter out empty array items before submission
-      const filteredAmenities = data.amenities.filter((a) => a.name);
+      // Combine predefined selected amenities with manual ones
+      const predefinedAmenities = [];
+
+      for (let i = 0; i < selectedPredefinedAmenities.length; i++) {
+        const a = selectedPredefinedAmenities[i];
+
+        if (a.isCustom) {
+          // Custom amenities already have file
+          formData.append("amenityIcons", a.customFile);
+          formData.append("amenityIconIndexes", predefinedAmenities.length);
+
+          predefinedAmenities.push({
+            name: a.name,
+            icon: null,
+          });
+        } else {
+          // ⭐ PREDEFINED AMENITY FIX ⭐
+          const file = await urlToFile(a.image, `${a.name}.png`);
+
+          formData.append("amenityIcons", file);
+          formData.append("amenityIconIndexes", predefinedAmenities.length);
+
+          predefinedAmenities.push({
+            name: a.name,
+            icon: null, // backend will replace with /uploads/file
+          });
+        }
+      }
+
+      // Process manual amenities and upload their icons
+      const manualAmenities = [];
+      let manualAmenityIconOffset = predefinedAmenities.length;
+
+      data.amenities.forEach((amenity, index) => {
+        if (amenity.name && amenity.name.trim()) {
+          // If there's an icon for this manual amenity
+          if (selectedAmenityIcons[index]) {
+            formData.append("amenityIcons", selectedAmenityIcons[index]);
+            formData.append("amenityIconIndexes", manualAmenityIconOffset);
+            manualAmenities.push({
+              name: amenity.name.trim(),
+              icon: null, // Will be replaced by backend with uploaded path
+            });
+            manualAmenityIconOffset++;
+          } else if (isEditing && amenity.icon) {
+            // Keep existing icon during edit
+            manualAmenities.push({
+              name: amenity.name.trim(),
+              icon: amenity.icon,
+            });
+          }
+          // Skip amenities without icons (they won't pass validation)
+        }
+      });
+
+      const allAmenities = [...predefinedAmenities, ...manualAmenities];
+
       const filteredHighlights = data.highlights.filter(
         (h) => h.title && h.subtitle
       );
@@ -401,8 +558,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
         (n) => n.name
       );
 
-      // Arrays as JSON (without icon URLs - they'll be added on backend)
-      formData.append("amenities", JSON.stringify(filteredAmenities));
+      formData.append("amenities", JSON.stringify(allAmenities));
       formData.append("highlights", JSON.stringify(filteredHighlights));
       formData.append(
         "nearbyLocations",
@@ -424,7 +580,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
         formData.append("galleryImages", img)
       );
 
-      // Amenity icons - append each icon with its index
+      // Amenity icons for manually added
       selectedAmenityIcons.forEach((icon, index) => {
         if (icon) {
           formData.append(`amenityIcons`, icon);
@@ -432,14 +588,20 @@ export default function ProjectForm({ open, onOpenChange, project }) {
         }
       });
 
+      // Custom amenity icons from predefined selector
+      // selectedPredefinedAmenities.forEach((amenity, index) => {
+      //   if (amenity.isCustom && amenity.customFile) {
+      //     formData.append(`customAmenityIcons`, amenity.customFile);
+      //     formData.append(`customAmenityIndexes`, index);
+      //   }
+      // });
+
       // Documents
       if (selectedBrochure) formData.append("brochure", selectedBrochure);
       if (selectedPriceSheet) formData.append("priceSheet", selectedPriceSheet);
 
       // Video
       if (selectedVideo) formData.append("video", selectedVideo);
-
-      console.log(deletedGalleryImages);
 
       deletedGalleryImages.forEach((img) => {
         formData.append("deletedImages", img);
@@ -457,6 +619,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
       reset();
       resetAllPreviews();
       resetAllSelectedFiles();
+      setSelectedPredefinedAmenities([]);
     } catch (error) {
       toast.error(error?.data?.message || "Something went wrong");
     }
@@ -570,6 +733,9 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   className="bg-zinc-800 border-zinc-700"
                   {...register("title", {
                     required: "Project title is required",
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Title cannot be empty or spaces only",
                   })}
                 />
                 {errors.title && (
@@ -583,38 +749,42 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="tagline"
                   placeholder="Enter project tagline"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("tagline")}
+                  {...register("tagline", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Tagline cannot be empty or spaces only",
+                  })}
                 />
+                {errors.tagline && (
+                  <p className="text-red-500 text-sm">
+                    {errors.tagline.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-
               <Textarea
                 id="description"
                 placeholder="Enter project description"
                 className="bg-zinc-800 border-zinc-700 min-h-[80px]"
                 {...register("description", {
+                  required: "Project Description is required",
+                  validate: (value) =>
+                    value.trim().length > 0 ||
+                    "Description cannot be empty or spaces only",
                   onChange: (e) => {
                     const value = e.target.value;
-
-                    // words ka array banao
                     const words = value.trim().split(/\s+/).filter(Boolean);
-
-                    // agar 100 se zyada hai to trim kar do
                     if (words.length > 100) {
                       const limitedText = words.slice(0, 100).join(" ");
-                      e.target.value = limitedText; // ✅ textarea me sirf 100 words hi rahenge
+                      e.target.value = limitedText;
                     }
-
-                    // react-hook-form ko baaki ka kaam karne do
                     return e;
                   },
                 })}
               />
-
-              {/* Live word counter */}
               <p className="text-xs text-gray-400">
                 {
                   (watch("description") || "")
@@ -624,7 +794,6 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                 }
                 /100 words
               </p>
-
               {errors?.description && (
                 <p className="text-red-500 text-xs">
                   {errors.description.message}
@@ -639,8 +808,17 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="location"
                   placeholder="e.g., Jodhpur"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("location")}
+                  {...register("location", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Location cannot be empty or spaces only",
+                  })}
                 />
+                {errors?.location && (
+                  <p className="text-red-500 text-xs">
+                    {errors.location.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -649,8 +827,17 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="address"
                   placeholder="Full address"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("address")}
+                  {...register("address", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Address cannot be empty or spaces only",
+                  })}
                 />
+                {errors?.address && (
+                  <p className="text-red-500 text-xs">
+                    {errors.address.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -674,8 +861,15 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="price"
                   placeholder="e.g., 50 Lakhs"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("price")}
+                  {...register("price", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Price cannot be empty or spaces only",
+                  })}
                 />
+                {errors?.price && (
+                  <p className="text-red-500 text-xs">{errors.price.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -684,8 +878,15 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="area"
                   placeholder="e.g., 2000 sq ft"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("area")}
+                  {...register("area", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Area cannot be empty or spaces only",
+                  })}
                 />
+                {errors?.area && (
+                  <p className="text-red-500 text-xs">{errors.area.message}</p>
+                )}
               </div>
             </div>
 
@@ -696,18 +897,41 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="propertyTypes"
                   placeholder="e.g., 2BHK, 3BHK"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("propertyTypes")}
+                  {...register("propertyTypes", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Property Types cannot be empty or spaces only",
+                  })}
                 />
+                {errors?.propertyTypes && (
+                  <p className="text-red-500 text-xs">
+                    {errors.propertyTypes.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="contactNumber">Contact Number</Label>
                 <Input
                   id="contactNumber"
-                  placeholder="e.g., +91 9876543210"
+                  type="text"
+                  maxLength={10}
+                  placeholder="Enter contact number"
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("contactNumber")}
+                  {...register("contactNumber", {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Contact Number cannot be empty or spaces only",
+                  })}
+                  onChange={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, "");
+                  }}
                 />
+                {errors?.contactNumber && (
+                  <p className="text-red-500 text-xs">
+                    {errors.contactNumber.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -761,7 +985,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
 
             {/* Video Section */}
             <div className="space-y-2">
-              <Label>Video File (Max 100MB)</Label>
+              <Label>Video File (Max 200MB)</Label>
               {videoPreview ? (
                 <div className="space-y-2">
                   <div className="relative">
@@ -791,7 +1015,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                     Upload video (MP4, WebM, OGG, MOV)
                   </span>
                   <span className="text-zinc-500 text-xs mt-1">
-                    Max size: 100MB
+                    Max size: 200MB
                   </span>
                   <input
                     type="file"
@@ -869,25 +1093,167 @@ export default function ProjectForm({ open, onOpenChange, project }) {
             </div>
           </div>
 
-          {/* Amenities Section */}
+          {/* NEW: Predefined Amenities Selector */}
+          <div className="space-y-4">
+            {/* <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[#d4af37]">
+                Select Amenities
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCustomAmenity(!showCustomAmenity)}
+                className="bg-zinc-800 text-white hover:bg-zinc-700"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Custom
+              </Button>
+            </div> */}
+
+            {/* Predefined Amenities Grid with Real Images */}
+            <div className="grid grid-cols-4 gap-3">
+              {PREDEFINED_AMENITIES.map((amenity) => {
+                const isSelected = selectedPredefinedAmenities.some(
+                  (a) => a.name === amenity.name
+                );
+                return (
+                  <button
+                    key={amenity.name}
+                    type="button"
+                    onClick={() => togglePredefinedAmenity(amenity)}
+                    className={`relative p-3 rounded-lg border-2 transition-all ${
+                      isSelected
+                        ? "border-[#d4af37] bg-[#d4af37]/10"
+                        : "border-zinc-700 hover:border-zinc-600"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-14 h-14 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
+                        <img
+                          src={amenity.image}
+                          alt={amenity.name}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      </div>
+                      <span className="text-xs text-center text-white leading-tight">
+                        {amenity.name}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 w-5 h-5 bg-[#d4af37] rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-black" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Amenity Form */}
+            {showCustomAmenity && (
+              <div className="p-4 bg-zinc-800 rounded-lg space-y-3 border border-[#d4af37]">
+                <h4 className="text-sm font-semibold text-[#d4af37]">
+                  Add Custom Amenity
+                </h4>
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="Amenity Name"
+                    value={customAmenityName}
+                    onChange={(e) => setCustomAmenityName(e.target.value)}
+                    className="flex-1 bg-zinc-900 border-zinc-700"
+                  />
+                  <div className="flex gap-2">
+                    {customAmenityPreview ? (
+                      <div className="relative w-12 h-12 border border-zinc-700 rounded overflow-hidden">
+                        <img
+                          src={customAmenityPreview}
+                          alt="Custom"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomAmenityIcon(null);
+                            setCustomAmenityPreview(null);
+                          }}
+                          className="absolute -top-1 -right-1 p-0.5 bg-red-500 rounded-full"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="w-12 h-12 border-2 border-dashed border-zinc-700 rounded cursor-pointer flex items-center justify-center hover:border-[#d4af37]">
+                        <Upload className="w-4 h-4 text-zinc-400" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCustomAmenityIconChange}
+                        />
+                      </label>
+                    )}
+                    <Button
+                      type="button"
+                      onClick={addCustomPredefinedAmenity}
+                      className="bg-[#d4af37] text-black hover:bg-[#c4a137]"
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Selected Amenities Display */}
+            {selectedPredefinedAmenities.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-white">
+                  Selected Amenities ({selectedPredefinedAmenities.length})
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedPredefinedAmenities.map((amenity) => (
+                    <div
+                      key={amenity.name}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-full border border-[#d4af37]"
+                    >
+                      <img
+                        src={amenity.image}
+                        alt={amenity.name}
+                        className="w-4 h-4 object-contain"
+                      />
+                      <span className="text-sm text-white">{amenity.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removePredefinedAmenity(amenity.name)}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Manual Amenities Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-[#d4af37]">
-                Amenities
+                Or Add Amenities Manually
               </h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleAddAmenity}
-                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                className="bg-[#d4af37] text-black hover:bg-[#c4a137] cursor-pointer"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Amenity
               </Button>
             </div>
             {amenityFields.map((field, index) => (
               <div key={field.id} className="flex gap-2 items-start">
-                {/* Icon Upload */}
                 <div className="space-y-1">
                   <Label className="text-xs text-zinc-400">
                     Icon (35x28px)
@@ -919,8 +1285,6 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                     </label>
                   )}
                 </div>
-
-                {/* Amenity Name */}
                 <div className="flex-1">
                   <Label className="text-xs text-zinc-400">Amenity Name</Label>
                   <Input
@@ -929,8 +1293,6 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                     {...register(`amenities.${index}.name`)}
                   />
                 </div>
-
-                {/* Remove Button */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -955,7 +1317,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                 variant="outline"
                 size="sm"
                 onClick={() => appendHighlight({ title: "", subtitle: "" })}
-                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                className="bg-[#d4af37] text-black hover:bg-[#c4a137] cursor-pointer"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Highlight
               </Button>
@@ -965,12 +1327,20 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                 <Input
                   placeholder="Title (e.g., 2 & 3 BHK)"
                   className="bg-zinc-800 border-zinc-700 flex-1"
-                  {...register(`highlights.${index}.title`)}
+                  {...register(`highlights.${index}.title`, {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Title cannot be empty or spaces only",
+                  })}
                 />
                 <Input
                   placeholder="Subtitle (e.g., Apartments)"
                   className="bg-zinc-800 border-zinc-700 flex-1"
-                  {...register(`highlights.${index}.subtitle`)}
+                  {...register(`highlights.${index}.subtitle`, {
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Subtitle cannot be empty or spaces only",
+                  })}
                 />
                 <Button
                   type="button"
@@ -996,7 +1366,7 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                 variant="outline"
                 size="sm"
                 onClick={() => appendNearby({ name: "", distance: "3.5 KM" })}
-                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                className="bg-[#d4af37] text-black hover:bg-[#c4a137] cursor-pointer"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Location
               </Button>
@@ -1006,12 +1376,22 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                 <Input
                   placeholder="Location name"
                   className="bg-zinc-800 border-zinc-700 flex-1"
-                  {...register(`nearbyLocations.${index}.name`)}
+                  {...register(`nearbyLocations.${index}.name`, {
+                    required: "Location is required",
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Location cannot be empty or spaces only",
+                  })}
                 />
                 <Input
                   placeholder="Distance (e.g., 3.5 KM)"
                   className="bg-zinc-800 border-zinc-700 w-32"
-                  {...register(`nearbyLocations.${index}.distance`)}
+                  {...register(`nearbyLocations.${index}.distance`, {
+                    required: "Distance is required",
+                    validate: (value) =>
+                      value.trim().length > 0 ||
+                      "Distance cannot be empty or spaces only",
+                  })}
                 />
                 <Button
                   type="button"
@@ -1031,17 +1411,24 @@ export default function ProjectForm({ open, onOpenChange, project }) {
             <h3 className="text-lg font-semibold text-[#d4af37]">
               Additional Settings
             </h3>
-
             <div className="space-y-2">
               <Label htmlFor="mapEmbedUrl">Map Embed URL</Label>
               <Input
                 id="mapEmbedUrl"
                 placeholder="Google Maps embed URL"
                 className="bg-zinc-800 border-zinc-700"
-                {...register("mapEmbedUrl")}
+                {...register("mapEmbedUrl", {
+                  validate: (value) =>
+                    value.trim().length > 0 ||
+                    "Map URL cannot be empty or spaces only",
+                })}
               />
+              {errors.mapEmbedUrl && (
+                <p className="text-red-500 text-sm">
+                  {errors.mapEmbedUrl.message}
+                </p>
+              )}
             </div>
-
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="order">Display Order</Label>
@@ -1049,33 +1436,15 @@ export default function ProjectForm({ open, onOpenChange, project }) {
                   id="order"
                   type="number"
                   placeholder="0"
+                  min="0"
+                  max={length}
                   className="bg-zinc-800 border-zinc-700"
-                  {...register("order", { valueAsNumber: true })}
+                  {...register("order", {
+                    valueAsNumber: true,
+                    validate: (value) =>
+                      value >= 0 || "Order cannot be negative",
+                  })}
                 />
-              </div>
-
-              <div className="flex items-center space-x-2 pt-8">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-800"
-                  {...register("isActive")}
-                />
-                <Label htmlFor="isActive" className="cursor-pointer">
-                  Active
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2 pt-8">
-                <input
-                  type="checkbox"
-                  id="isFeatured"
-                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-800"
-                  {...register("isFeatured")}
-                />
-                <Label htmlFor="isFeatured" className="cursor-pointer">
-                  Featured
-                </Label>
               </div>
             </div>
           </div>
@@ -1086,14 +1455,14 @@ export default function ProjectForm({ open, onOpenChange, project }) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+              className="bg-[#d4af37] text-black hover:bg-[#c4a137] cursor-pointer"
               disabled={isLoading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-[#d4af37] text-black hover:bg-[#c4a137]"
+              className="bg-[#d4af37] text-black hover:bg-[#c4a137] cursor-pointer"
               disabled={isLoading}
             >
               {isLoading ? (

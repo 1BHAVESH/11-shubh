@@ -24,8 +24,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const API_URL=import.meta.env.VITE_API_URL ||" http://localhost:3001/"
-
+const API_URL = import.meta.env.VITE_API_URL || " http://localhost:3001/";
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -33,8 +32,7 @@ const ProjectDetail = () => {
   const projects = projectsData?.data || [];
   const project = projects.find((p) => p._id === id);
 
-  
-
+  // ALL STATE HOOKS
   const [activeTab, setActiveTab] = useState("Master Plan");
   const [swiperOpen, setSwiperOpen] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
@@ -67,12 +65,6 @@ const ProjectDetail = () => {
     setSwiperOpen(true);
   };
 
-  useEffect(() => {
-    const handleEsc = (e) => e.key === "Escape" && setSwiperOpen(false);
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
-
   const handleScroll = (sectionId) => {
     setActiveSection(sectionId);
     const element = document.getElementById(sectionId);
@@ -86,6 +78,19 @@ const ProjectDetail = () => {
       });
     }
   };
+
+  const getFileUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_URL}${url}`;
+  };
+
+  // ALL EFFECTS - BEFORE ANY CONDITIONAL RETURNS
+  useEffect(() => {
+    const handleEsc = (e) => e.key === "Escape" && setSwiperOpen(false);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
 
   useEffect(() => {
     const handleScrollSpy = () => {
@@ -105,12 +110,18 @@ const ProjectDetail = () => {
     return () => window.removeEventListener("scroll", handleScrollSpy);
   }, []);
 
-  const getFileUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  return `${API_URL}${url}`;
-};
+  // MOVED THIS EFFECT BEFORE THE CONDITIONAL RETURNS - THIS WAS THE BUG
+  useEffect(() => {
+    if (!project?._id) return;
 
+    console.log(project._id);
+
+    fetch(`http://localhost:3001/api/view/project/${project._id}`, {
+      method: "POST",
+    }).catch((err) => console.error("Failed to track view:", err));
+  }, [project?._id]);
+
+  // NOW SAFE TO DO CONDITIONAL RETURNS
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -128,14 +139,6 @@ const ProjectDetail = () => {
     );
   }
 
-  const amenitiess =
-    project?.amenities?.length > 0
-      ? project.amenities.map((item) => ({
-          icon: item.icon,
-          name: item.name,
-        }))
-      : [];
-
   if (!project) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
@@ -151,18 +154,27 @@ const ProjectDetail = () => {
     );
   }
 
+  // Derived data after conditional returns
+  const amenitiess =
+    project?.amenities?.length > 0
+      ? project.amenities.map((item) => ({
+          icon: item.icon,
+          name: item.name,
+        }))
+      : [];
+
   const galleryImages = (project.galleryImages || []).map(
     (img) => `${API_URL}${img}`
   );
 
-   console.log(project)
+  console.log(project);
 
-  const nearLocations = project?.nearbyLocations ? project?.nearbyLocations.map((item) => ({
-    name: item.name,
-    distance: item.distance
-  })) : nearbyLocations
-
-  // console.log(nearLocations)
+  const nearLocations = project?.nearbyLocations
+    ? project?.nearbyLocations.map((item) => ({
+        name: item.name,
+        distance: item.distance,
+      }))
+    : nearbyLocations;
 
   return (
     <div className="min-h-screen bg-white">
@@ -216,7 +228,7 @@ const ProjectDetail = () => {
                 <button
                   key={index}
                   onClick={() => handleScroll(tab)}
-                  className={`whitespace-nowrap pb-4 pt-4 px-2 text-sm font-medium transition-all duration-300 border-b-2 ${
+                  className={`whitespace-nowrap cursor-pointer pb-4 pt-4 px-2 text-sm font-medium transition-all duration-300 border-b-2 ${
                     activeSection === tab
                       ? "text-[#D2AB48] border-[#D2AB48]"
                       : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300"
@@ -228,7 +240,7 @@ const ProjectDetail = () => {
             </div>
             <Dialog>
               <DialogTrigger asChild>
-                <button className="ml-4 bg-[#D2AB48] hover:bg-[#b89434] text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-md whitespace-nowrap">
+                <button className="ml-4 cursor-pointer bg-[#D2AB48] hover:bg-[#b89434] text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-md whitespace-nowrap">
                   Book Site Visit
                 </button>
               </DialogTrigger>
@@ -270,7 +282,10 @@ const ProjectDetail = () => {
 
               <div className="bg-[#FFF9EA] border-l-4 border-[#D2AB48] p-6 rounded-r-lg">
                 <p className="text-gray-800 flex items-start gap-2">
-                  <Phone className="text-[#D2AB48] mt-1 flex-shrink-0" size={20} />
+                  <Phone
+                    className="text-[#D2AB48] mt-1 flex-shrink-0"
+                    size={20}
+                  />
                   <span>
                     To know more about this project, contact us at{" "}
                     <Link
@@ -284,23 +299,23 @@ const ProjectDetail = () => {
                 </p>
               </div>
 
-               {project.priceSheetUrl && (
-              <>
-                <div className="mt-6">
-                  <button
-                    className="bg-[#D2AB48] cursor-pointer hover:bg-[#b6903d] text-white font-semibold px-6 py-2 rounded-md transition-colors duration-300"
-                    onClick={() => {
-                      const link = document.createElement("a");
-                      link.href = getFileUrl(project.priceSheetUrl);
-                      link.download = "price-sheet.pdf";
-                      link.click();
-                    }}
-                  >
-                    Download Price Sheet
-                  </button>
-                </div>
-              </>
-            )}
+              {project.priceSheetUrl && (
+                <>
+                  <div className="mt-6">
+                    <button
+                      className="bg-[#D2AB48] cursor-pointer hover:bg-[#b6903d] text-white font-semibold px-6 py-2 rounded-md transition-colors duration-300"
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.href = getFileUrl(project.priceSheetUrl);
+                        link.download = "price-sheet.pdf";
+                        link.click();
+                      }}
+                    >
+                      Download Price Sheet
+                    </button>
+                  </div>
+                </>
+              )}
 
               {/* HIGHLIGHTS CARDS */}
               {project.highlights && project.highlights.length > 0 && (
@@ -360,7 +375,7 @@ const ProjectDetail = () => {
                 <div
                   key={index}
                   className="group flex flex-col items-center text-center"
-                >
+                > 
                   <div className="bg-white rounded-full w-24 h-24 flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
                     <img
                       src={`${API_URL}${amenity.icon}`}
@@ -398,7 +413,7 @@ const ProjectDetail = () => {
                 <button
                   key={index}
                   onClick={() => setActiveTab(item)}
-                  className={`px-8 py-3 rounded-lg font-semibold text-lg transition-all duration-300 ${
+                  className={`px-8 py-3 rounded-lg cursor-pointer font-semibold text-lg transition-all duration-300 ${
                     activeTab === item
                       ? "bg-[#D2AB48] text-white shadow-lg scale-105"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -411,7 +426,7 @@ const ProjectDetail = () => {
           </div>
 
           {/* PLAN IMAGE */}
-          <div className="bg-gradient-to-br from-[#FFF9EA] to-white p-8 rounded-2xl shadow-lg">
+          <div className="bg-gradient-to-br from-[#FFF9EA] to-white p-8 rounded-2xl cursor-pointer shadow-lg">
             {(activeTab === "Master Plan" && project.masterPlanImageUrl) ||
             (activeTab === "Floor Plan" && project.floorPlanImageUrl) ? (
               <img
@@ -466,7 +481,10 @@ const ProjectDetail = () => {
       </section>
 
       {/* LOCATION SECTION */}
-      <section id="Location" className="py-20 bg-gradient-to-b from-gray-50 to-white">
+      <section
+        id="Location"
+        className="py-20 bg-gradient-to-b from-gray-50 to-white"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* SECTION HEADER */}
           <div className="text-center mb-16">
@@ -494,7 +512,10 @@ const ProjectDetail = () => {
 
               {project.location && (
                 <div className="flex items-start gap-3 mb-8 p-4 bg-white/50 rounded-lg">
-                  <MapPin className="text-[#D2AB48] flex-shrink-0 mt-1" size={20} />
+                  <MapPin
+                    className="text-[#D2AB48] flex-shrink-0 mt-1"
+                    size={20}
+                  />
                   <p className="text-gray-800 leading-relaxed">
                     {project.location}
                   </p>
@@ -513,10 +534,12 @@ const ProjectDetail = () => {
                   >
                     <div className="flex items-center gap-3">
                       <img src={arrowImg} alt="arrow" className="w-4 h-4" />
-                      <span className="text-gray-700 font-medium">{place.name}</span>
+                      <span className="text-gray-700 font-medium">
+                        {place.name}
+                      </span>
                     </div>
                     <span className="text-[#D2AB48] font-semibold text-sm">
-                     {place.distance}
+                      {place.distance}
                     </span>
                   </div>
                 ))}
@@ -575,7 +598,9 @@ const ProjectDetail = () => {
                     alt={`Gallery ${index + 1}`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                    <span className="text-white font-semibold">View Image</span>
+                    <span className="text-white font-semibold">
+                      View Image
+                    </span>
                   </div>
                 </div>
               ))}

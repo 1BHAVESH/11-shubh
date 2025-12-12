@@ -12,7 +12,9 @@ import projectRoute from "./routes/projectRoute.js";
 import HomeRoute from "./routes/homeRoute.js"
 import CarrerRoute from "./routes/careerRoute.js"
 import faqRoute from "./routes/faqRoute.js"
+import viewRoute from "./routes/viewRoute.js"
 import PrivacyPoilcyRoute from "./routes/PolicyRoute.js";
+import genralSettingRoute from "./routes/genralSettingsRoute.js"
 import Admin from "./models/Admin.js";
 
 dotenv.config();
@@ -46,7 +48,8 @@ app.use("/api/home", HomeRoute)
 app.use("/api/career", CarrerRoute)
 app.use("/api/faq", faqRoute)
 app.use("/api", PrivacyPoilcyRoute)
-
+app.use("/api/view", viewRoute)
+app.use("/api/genral-setting", genralSettingRoute)
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

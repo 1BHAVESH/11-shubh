@@ -1,19 +1,25 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import JoditEditor from "jodit-react";
 import axios from "axios";
+import { useGetPrivacyPolicyQuery } from "@/redux/features/shubamdevApi";
 
 const PolicyEditor = ({ placeholder }) => {
+  const { data, isLoading } = useGetPrivacyPolicyQuery();
   const editor = useRef(null);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (data?.data?.content) {
+      setContent(data.data.content);   // ⭐ Editor me existing content show hoga
+    }
+  }, [data]);
 
   const config = useMemo(
     () => ({
       readonly: false,
       height: 400,
       placeholder: placeholder || "Start typing...",
-
-      // Auto-resize image on paste
       events: {
         afterInsertImage: function (img) {
           img.style.width = "300px";
@@ -32,7 +38,6 @@ const PolicyEditor = ({ placeholder }) => {
         content,
       });
 
-      console.log("Saved:", res.data);
       alert("Privacy Policy Saved Successfully!");
 
     } catch (error) {
@@ -43,6 +48,8 @@ const PolicyEditor = ({ placeholder }) => {
     }
   };
 
+  if (isLoading) return <h1>wait...</h1>;
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-3">Privacy Policy Editor</h2>
@@ -51,8 +58,7 @@ const PolicyEditor = ({ placeholder }) => {
         ref={editor}
         value={content}
         config={config}
-        onChange={() => {}}
-        onBlur={(newContent) => setContent(newContent)}
+        onChange={(newContent) => setContent(newContent)}  // ⭐ Proper update
       />
 
       <button

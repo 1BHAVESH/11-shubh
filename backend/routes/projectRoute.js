@@ -9,6 +9,7 @@ import {
   updateProject,
   deleteProject,
   getProjectTtile,
+  toggleProjectStatus,
 } from "../controller/projectController.js";
 import { protect } from "../middleware/auth.js";
 
@@ -87,6 +88,7 @@ router.get("/", getAllProjects);
 router.get("/get-title", getProjectTtile)
 router.get("/slug/:slug", getProjectBySlug);
 router.get("/:id", getProjectById);
+router.patch("/toggle/:id", protect, toggleProjectStatus);
 router.post("/", protect, uploadFields, createProject);
 router.put("/:id", protect, uploadFields, updateProject);
 router.delete("/:id", protect, deleteProject);

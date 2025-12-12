@@ -57,14 +57,12 @@ export const adminApi = createApi({
       }),
     }),
 
-
     getAdminSideBanner: builder.query({
-      query: () =>({
+      query: () => ({
         url: "/banners/banner",
         method: "GET",
-        
       }),
-      providesTags: ["Banner"]
+      providesTags: ["Banner"],
     }),
 
     getBanners: builder.query({
@@ -153,43 +151,77 @@ export const adminApi = createApi({
       invalidatesTags: ["Career"],
     }),
 
-    createFaq: builder.mutation({
-      query: (body) => {
+    deleteCareer: builder.mutation({
+      query: (id) => ({
+        url: `/career/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Career"],
+    }),
 
-        return{
-          url: "/faq/",
-          method: "POST",
-          body
-        }
-      }
+    createFaq: builder.mutation({
+      query: (body) => ({
+        url: "/faq",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Faq"],
     }),
 
     getFaq: builder.query({
-      query: (body) => {
-
-        return{
-          url: "/faq/",
-          method: "GET",
-          body
-        }
-      }
+      query: () => ({
+        url: "/faq",
+        method: "GET",
+      }),
+      providesTags: ["Faq"],
     }),
 
     faqUpdate: builder.mutation({
-      query: ({id, ...formData}) => {
+      query: ({ id, ...formData }) => ({
+        url: `/faq/${id}`,
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["Faq"],
+    }),
 
-        console.log( id)
-
-        console.log(formData)
-
-        return{
+    deleteFaq: builder.mutation({
+      query: ({ id }) => {
+        return {
           url: `faq/${id}`,
-          method: "PUT",
-          body: formData
+          method: "DELETE",
+        };
+      },
+      invalidatesTags: ["Faq"],
+    }),
+    toggleProject: builder.mutation({
+      query: (id) => ({
+        url: `/projects/toggle/${id}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Project"],
+    }),
+    getViewAnalytics: builder.query({
+      query: () => "/view/all",
+    }),
 
-        }
-      }
-    })
+    createGeneralSetting: builder.mutation({
+      query: (formData) => ({
+        url: "/genral-setting/general-settings",
+        method: "PUT",
+        body: formData,
+      }),
+
+      invalidatesTags: ["Admin"]
+    }),
+    getGeneralSettingQuery: builder.query({
+      query: () => ({
+        url: "/genral-setting/general-settings",
+        method: "GET",
+      }),
+
+      providesTags: ["Admin"]
+    }),
   }),
 });
 
@@ -211,8 +243,14 @@ export const {
   useCreateJobMutation,
   useGetJobQuery,
   useUpdateJobMutation,
+  useDeleteCareerMutation,
   useCreateFaqMutation,
   useGetFaqQuery,
   useFaqUpdateMutation,
-  useGetAdminSideBannerQuery
+  useDeleteFaqMutation,
+  useGetAdminSideBannerQuery,
+  useToggleProjectMutation,
+  useGetViewAnalyticsQuery,
+  useCreateGeneralSettingMutation,
+  useGetGeneralSettingQueryQuery
 } = adminApi;

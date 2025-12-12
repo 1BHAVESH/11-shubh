@@ -1,48 +1,58 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, FileText, ExternalLink, FolderKanban } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderKanban } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import ProjectForm from "@/components/admin/ProjectForm";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-
-import { Link } from "react-router-dom";
-import { toast } from "sonner";
 
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import { toast } from "sonner";
+import {
   useGetProjectsQuery,
-  useDeleteProjectMutation
+  useDeleteProjectMutation,
+  useUpdateProjectMutation,
+  useToggleProjectMutation,
 } from "@/redux/features/adminApi";
 
 import DataTable from "@/components/common/DataTable";
 import useDataTable from "@/hooks/useDataTable";
+import { Switch } from "@/components/ui/switch";
 
 const BASE_URL = "http://localhost:3001";
 
 export default function ProjectManagement() {
+  const [toggleProject] = useToggleProjectMutation();
+
   const { data: projectsData, isLoading, error } = useGetProjectsQuery();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+  const [updateProject] = useUpdateProjectMutation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const projects = projectsData?.data || [];
 
-  // ⭐ Apply reusable search + filter + pagination system
+  // ⭐ Search + Pagination Hook
   const {
     searchQuery,
     setSearchQuery,
-
     statusFilter,
     setStatusFilter,
-
     currentPage,
     setCurrentPage,
-
     itemsPerPage,
     setItemsPerPage,
-
     totalPages,
     filteredData: filteredProjects,
     paginatedData: paginatedProjects,
@@ -78,7 +88,28 @@ export default function ProjectManagement() {
       setDeleteDialogOpen(false);
       setProjectToDelete(null);
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to delete project");
+      toast.error("Failed to delete project");
+    }
+  };
+
+  //  Toggle Active / Inactive
+  const handleToggleActive = async (project) => {
+    try {
+      console.log(project);
+      const response = await toggleProject(project._id).unwrap();
+
+      console.log(response);
+      toast.success(
+        `Project ${project.isActive ? "Deactivated" : "Activated"} successfully`
+      );
+
+      if (response.success) {
+        toast.success("project is activate");
+      } else {
+        toast.warning("project is deactivate");
+      }
+    } catch (error) {
+      toast.error("Failed to update project status");
     }
   };
 
@@ -102,49 +133,40 @@ export default function ProjectManagement() {
 
   return (
     <div className="space-y-8 pt-12 lg:pt-0">
-
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Project Management</h1>
 
         <Button
           onClick={handleAdd}
-          className="bg-[#d4af37] hover:bg-[#b8962f] text-black"
+          className="bg-[#d4af37] hover:bg-[#b8962f] text-black cursor-pointer"
         >
           <Plus className="w-4 h-4 mr-2" /> Add Project
         </Button>
       </div>
 
-      {/* ⭐ REUSABLE DATA TABLE */}
+      {/* ⭐ DATA TABLE */}
       <DataTable
         title="Projects"
         subtitle="Manage your real estate projects"
-
         data={projects}
         paginatedData={paginatedProjects}
         filteredData={filteredProjects}
-
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
-
         itemsPerPage={itemsPerPage}
         setItemsPerPage={setItemsPerPage}
-
         totalPages={totalPages}
-
         filterOptions={[
           { value: "all", label: "All" },
           { value: "ongoing", label: "Ongoing" },
           { value: "completed", label: "Completed" },
           { value: "upcoming", label: "Upcoming" },
         ]}
-
         columns={[
           {
             key: "image",
@@ -153,7 +175,11 @@ export default function ProjectManagement() {
               project.imageUrl ? (
                 <img
                   src={`${BASE_URL}${project.imageUrl}`}
-                  className="w-16 h-12 object-cover rounded"
+                  className="w-16 h-12 object-cover rounded cursor-pointer"
+                  onClick={() => {
+                  setPreviewImage(`${BASE_URL}${project.imageUrl}`);
+                  setPreviewOpen(true);
+                }}
                 />
               ) : (
                 <div className="w-16 h-12 bg-zinc-800 rounded flex items-center justify-center">
@@ -173,14 +199,11 @@ export default function ProjectManagement() {
             ),
           },
 
-          {
-            key: "location",
-            label: "Location",
-          },
+          { key: "location", label: "Location" },
 
           {
             key: "status",
-            label: "Status",
+            label: "Project Status",
             render: (project) => {
               const statusColors = {
                 ongoing: "text-blue-400 bg-blue-500/20",
@@ -191,7 +214,8 @@ export default function ProjectManagement() {
               return (
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    statusColors[project.status] || "text-blue-400 bg-blue-500/20"
+                    statusColors[project.status] ||
+                    "text-blue-400 bg-blue-500/20"
                   }`}
                 >
                   {project.status}
@@ -201,21 +225,21 @@ export default function ProjectManagement() {
           },
 
           {
-            key: "pdf",
-            label: "PDF",
-            render: (project) =>
-              project.pdfUrl ? (
-                <Link
-                  to={project.pdfUrl}
-                  target="_blank"
-                  className="text-[#d4af37] inline-flex items-center gap-1"
-                >
-                  <FileText className="w-4 h-4" />
-                  <ExternalLink className="w-3 h-3" />
-                </Link>
-              ) : (
-                <span className="text-zinc-500">-</span>
-              ),
+            key: "isActive",
+            label: "Active",
+            render: (project) => (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={project.isActive}
+                  onCheckedChange={() => handleToggleActive(project)}
+                  className="cursor-pointer data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-red-600
+"
+                />
+                <span className="text-sm">
+                  {project.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+            ),
           },
 
           {
@@ -227,7 +251,7 @@ export default function ProjectManagement() {
                   size="icon-sm"
                   variant="ghost"
                   onClick={() => handleEdit(project)}
-                  className="text-zinc-400 hover:text-white"
+                  className="text-zinc-400 cursor-pointer"
                 >
                   <Pencil className="w-4 h-4" />
                 </Button>
@@ -236,7 +260,7 @@ export default function ProjectManagement() {
                   size="icon-sm"
                   variant="ghost"
                   onClick={() => handleDeleteClick(project)}
-                  className="text-red-400 hover:text-red-300"
+                  className="text-red-400 hover:text-red-300 cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -246,11 +270,12 @@ export default function ProjectManagement() {
         ]}
       />
 
-      {/* PROJECT FORM MODAL */}
+      {/* PROJECT FORM */}
       <ProjectForm
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         project={selectedProject}
+        length={projects.length}
       />
 
       {/* DELETE CONFIRM DIALOG */}
@@ -264,9 +289,13 @@ export default function ProjectManagement() {
           </DialogHeader>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
+
             <Button
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeleting}
@@ -277,7 +306,25 @@ export default function ProjectManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="bg-zinc-900 text-white border border-zinc-700 max-w-3xl [&>button]:cursor-pointer">
+          <DialogHeader>
+            <DialogTitle>Image Preview</DialogTitle>
+          </DialogHeader>
 
+          <div className="w-full flex justify-center">
+            <img
+              src={previewImage}
+              className="max-h-[70vh] rounded-lg object-contain"
+              alt="Preview"
+              onClick={() => {
+                  setPreviewImage(`${BASE_URL}${banner.imageUrl}`);
+                  setPreviewOpen(true);
+                }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

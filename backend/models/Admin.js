@@ -2,6 +2,15 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const adminSchema = new mongoose.Schema({
+  name: {
+    type : String,
+    trim: true
+  },
+   phone: {
+      type: String,
+      trim: true,
+      match: [/^[0-9]{10}$/, "Phone number must be exactly 10 digits"],
+    },
   email: {
     type: String,
     required: true,

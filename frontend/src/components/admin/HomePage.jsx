@@ -422,253 +422,272 @@ const HomePage = () => {
 
       {/* ---------------------- MODAL ---------------------- */}
       {openSection && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white w-[500px] max-h-[90vh] overflow-y-auto p-6 rounded shadow-lg">
-            <h3 className="text-lg font-bold mb-4">
-              {openSection === "testimonials"
-                ? editingTestimonialId
-                  ? "Edit Testimonial"
-                  : "Add New Testimonial"
-                : `Update ${
-                    openSection.charAt(0).toUpperCase() + openSection.slice(1)
-                  }`}
-            </h3>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white w-[500px] max-h-[90vh] overflow-y-auto p-6 rounded shadow-lg">
+      <h3 className="text-lg font-bold mb-4">
+        {openSection === "testimonials"
+          ? editingTestimonialId
+            ? "Edit Testimonial"
+            : "Add New Testimonial"
+          : `Update ${
+              openSection.charAt(0).toUpperCase() + openSection.slice(1)
+            }`}
+      </h3>
 
-            <form onSubmit={handleFormSubmit(onSubmit)} className="space-y-4">
-              {/* ABOUT FORM */}
-              {openSection === "about" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      {...register("title", { required: "Title is required" })}
-                      placeholder="Title"
-                      className="w-full border p-2 rounded"
-                    />
-                    {errors.title && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.title.message}
-                      </p>
-                    )}
-                  </div>
+      <form onSubmit={handleFormSubmit(onSubmit)} className="space-y-4">
+        {/* ABOUT FORM */}
+        {openSection === "about" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Title
+              </label>
+              <input
+                type="text"
+                {...register("title", { 
+                  required: "Title is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "Title cannot be empty or just spaces",
+                  },
+                })}
+                placeholder="Title"
+                className="w-full border p-2 rounded"
+              />
+              {errors.title && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.title.message}
+                </p>
+              )}
+            </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      {...register("description", {
-                        validate: (value) => {
-                          const wordCount = value.trim().split(/\s+/).length;
-                          return (
-                            wordCount <= 125 || "Maximum 125 words allowed"
-                          );
-                        },
-                      })}
-                      className="w-full border p-2 rounded"
-                      rows="4"
-                    ></textarea>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
+              <textarea
+                {...register("description", {
+                  required: "Description is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "Description cannot be empty or just spaces",
+                    wordCount: (value) => {
+                      const wordCount = value.trim().split(/\s+/).length;
+                      return (
+                        wordCount <= 125 || "Maximum 125 words allowed"
+                      );
+                    },
+                  },
+                })}
+                className="w-full border p-2 rounded"
+                rows="4"
+              ></textarea>
 
-                    {errors.description && (
-                      <p className="text-red-500 text-xs">
-                        {errors.description.message}
-                      </p>
-                    )}
-                    {errors.description && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.description.message}
-                      </p>
-                    )}
-                  </div>
+              {errors.description && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Upload Image
-                    </label>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Upload Image
+              </label>
 
-                    <input
-                      type="file"
-                      accept="image/*"
-                      {...register("image")}
-                      // disabled={`${API_URL}${aboutData.image}`} // only one image allowed
-                      className="w-full border p-2 rounded"
-                    />
+              <input
+                type="file"
+                accept="image/*"
+                {...register("image")}
+                className="w-full border p-2 rounded"
+              />
 
-                    {/* NEW IMAGE PREVIEW */}
-                    {imagePreview && (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="mt-2 w-32 h-32 object-cover rounded border"
-                      />
-                    )}
-
-                    {/* EXISTING IMAGE + REMOVE BUTTON */}
-                    {!imagePreview && aboutData.image && (
-                      <>
-                        <img
-                          src={`${API_URL}${aboutData.image}`}
-                          alt="Current"
-                          className="mt-2 w-32 h-32 object-cover rounded border"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAboutData({ ...aboutData, image: "" }); // remove from state
-                            setValue("image", null); // clear form value
-                            setImagePreview(null); // clear preview
-                          }}
-                          className="bg-red-500 text-white px-3 py-1 rounded mt-2"
-                        >
-                          Remove Image
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
+              {/* NEW IMAGE PREVIEW */}
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="mt-2 w-32 h-32 object-cover rounded border"
+                />
               )}
 
-              {/* STATS FORM */}
-              {openSection === "stats" && (
+              {/* EXISTING IMAGE + REMOVE BUTTON */}
+              {!imagePreview && aboutData.image && (
                 <>
-                  {["awards", "projects", "clients", "team"].map((field) => (
-                    <div key={field}>
-                      <label className="block text-sm font-medium mb-1 capitalize">
-                        {field}
-                      </label>
-                      <input
-                        type="number"
-                        {...register(field, {
-                          required: `${field} is required`,
-                          min: { value: 0, message: "Value must be positive" },
-                        })}
-                        placeholder={field}
-                        className="w-full border p-2 rounded"
-                      />
-                      {errors[field] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors[field].message}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                  <img
+                    src={`${API_URL}${aboutData.image}`}
+                    alt="Current"
+                    className="mt-2 w-32 h-32 object-cover rounded border"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAboutData({ ...aboutData, image: "" });
+                      setValue("image", null);
+                      setImagePreview(null);
+                    }}
+                    className="bg-red-500 text-white px-3 py-1 rounded mt-2"
+                  >
+                    Remove Image
+                  </button>
                 </>
               )}
+            </div>
+          </>
+        )}
 
-              {/* TESTIMONIAL FORM */}
-              {openSection === "testimonials" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Upload Photo
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      {...register("photo", {
-                        required: !editingTestimonialId && "Photo is required",
-                      })}
-                      className="w-full border p-2 rounded"
-                    />
-                    {errors.photo && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.photo.message}
-                      </p>
-                    )}
-                    {photoPreview && (
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="mt-2 w-20 h-20 object-cover rounded-full border"
-                      />
-                    )}
-                  </div>
+        {/* STATS FORM */}
+        {openSection === "stats" && (
+          <>
+            {["awards", "projects", "clients", "team"].map((field) => (
+              <div key={field}>
+                <label className="block text-sm font-medium mb-1 capitalize">
+                  {field}
+                </label>
+                <input
+                  type="number"
+                  {...register(field, {
+                    required: `${field} is required`,
+                    min: { value: 0, message: "Value must be positive" },
+                  })}
+                  placeholder={field}
+                  className="w-full border p-2 rounded"
+                />
+                {errors[field] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors[field].message}
+                  </p>
+                )}
+              </div>
+            ))}
+          </>
+        )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      {...register("name", { required: "Name is required" })}
-                      placeholder="Name"
-                      className="w-full border p-2 rounded"
-                    />
-                    {errors.name && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.name.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Position
-                    </label>
-                    <input
-                      type="text"
-                      {...register("position", {
-                        required: "Position is required",
-                      })}
-                      placeholder="Position"
-                      className="w-full border p-2 rounded"
-                    />
-                    {errors.position && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.position.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Message
-                    </label>
-                    <textarea
-                      {...register("message", {
-                        required: "Message is required",
-                      })}
-                      placeholder="Message"
-                      className="w-full border p-2 rounded"
-                      rows="3"
-                    />
-                    {errors.message && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.message.message}
-                      </p>
-                    )}
-                  </div>
-                </>
+        {/* TESTIMONIAL FORM */}
+        {openSection === "testimonials" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Upload Photo
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                {...register("photo", {
+                  required: !editingTestimonialId && "Photo is required",
+                })}
+                className="w-full border p-2 rounded"
+              />
+              {errors.photo && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.photo.message}
+                </p>
               )}
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="mt-2 w-20 h-20 object-cover rounded-full border"
+                />
+              )}
+            </div>
 
-              <button
-                type="submit"
-                disabled={updateLoading}
-                className="w-full bg-green-600 text-white py-2 rounded mt-4 hover:bg-green-700 disabled:bg-gray-400"
-              >
-                {updateLoading ? "Saving..." : "Save Changes"}
-              </button>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Name
+              </label>
+              <input
+                type="text"
+                {...register("name", { 
+                  required: "Name is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "Name cannot be empty or just spaces",
+                  },
+                })}
+                placeholder="Name"
+                className="w-full border p-2 rounded"
+              />
+              {errors.name && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setOpenSection(null);
-                  setImagePreview(null);
-                  setPhotoPreview(null);
-                  reset();
-                }}
-                className="w-full bg-gray-500 text-white py-2 rounded mt-2 hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Position
+              </label>
+              <input
+                type="text"
+                {...register("position", {
+                  required: "Position is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "Position cannot be empty or just spaces",
+                  },
+                })}
+                placeholder="Position"
+                className="w-full border p-2 rounded"
+              />
+              {errors.position && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.position.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Message
+              </label>
+              <textarea
+                {...register("message", {
+                  required: "Message is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim() !== "" || "Message cannot be empty or just spaces",
+                  },
+                })}
+                placeholder="Message"
+                className="w-full border p-2 rounded"
+                rows="3"
+              />
+              {errors.message && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.message.message}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={updateLoading}
+          className="w-full bg-green-600 text-white py-2 rounded mt-4 hover:bg-green-700 disabled:bg-gray-400"
+        >
+          {updateLoading ? "Saving..." : "Save Changes"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setOpenSection(null);
+            setImagePreview(null);
+            setPhotoPreview(null);
+            reset();
+          }}
+          className="w-full bg-gray-500 text-white py-2 rounded mt-2 hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 };

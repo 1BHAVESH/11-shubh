@@ -15,7 +15,14 @@ import DataTable from "@/components/common/DataTable";
 import useDataTable from "@/hooks/useDataTable";
 
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const BASE_URL = "http://localhost:3001";
 
@@ -28,6 +35,8 @@ export default function BannerManagement() {
   const [selectedBanner, setSelectedBanner] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bannerToDelete, setBannerToDelete] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const banners = bannersData?.data || [];
 
@@ -111,6 +120,8 @@ export default function BannerManagement() {
     );
   }
 
+  console.log(banners)
+
   if (error) {
     return (
       <div className="text-center text-red-500 py-8">
@@ -123,7 +134,6 @@ export default function BannerManagement() {
 
   return (
     <div className="space-y-8 pt-12 lg:pt-0">
-
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Banner Management</h1>
 
@@ -139,31 +149,23 @@ export default function BannerManagement() {
       <DataTable
         title="Banners"
         subtitle="Manage your website banners"
-
         data={banners}
         paginatedData={paginatedBanners}
         filteredData={filteredBanners}
-
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-
         itemsPerPage={itemsPerPage}
         setItemsPerPage={setItemsPerPage}
-
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
-
         totalPages={totalPages}
-
         filterOptions={[
           { value: "all", label: "All" },
           { value: "active", label: "Active" },
           { value: "inactive", label: "Inactive" },
         ]}
-
         columns={[
           {
             key: "image",
@@ -171,7 +173,11 @@ export default function BannerManagement() {
             render: (banner) => (
               <img
                 src={`${BASE_URL}${banner.imageUrl}`}
-                className="w-16 h-10 object-cover rounded"
+                onClick={() => {
+                  setPreviewImage(`${BASE_URL}${banner.imageUrl}`);
+                  setPreviewOpen(true);
+                }}
+                className="w-16 h-10 object-cover rounded cursor-pointer hover:scale-105 transition"
               />
             ),
           },
@@ -185,7 +191,9 @@ export default function BannerManagement() {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={banner.isActive !== false}
-                  onCheckedChange={(checked) => handleStatusToggle(banner, checked)}
+                  onCheckedChange={(checked) =>
+                    handleStatusToggle(banner, checked)
+                  }
                   className="data-[state=checked]:bg-[#d4af37]"
                 />
                 <Badge
@@ -206,7 +214,11 @@ export default function BannerManagement() {
             label: "Actions",
             render: (banner) => (
               <div className="flex justify-end gap-2">
-                <Button size="icon-sm" variant="ghost" onClick={() => handleEdit(banner)}>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => handleEdit(banner)}
+                >
                   <Pencil className="w-4 h-4" />
                 </Button>
                 <Button
@@ -241,7 +253,10 @@ export default function BannerManagement() {
           </DialogHeader>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -254,7 +269,21 @@ export default function BannerManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="bg-zinc-900 text-white border border-zinc-700 max-w-3xl [&>button]:cursor-pointer">
+          <DialogHeader>
+            <DialogTitle>Image Preview</DialogTitle>
+          </DialogHeader>
 
+          <div className="w-full flex justify-center">
+            <img
+              src={previewImage}
+              className="max-h-[70vh] rounded-lg object-contain"
+              alt="Preview"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

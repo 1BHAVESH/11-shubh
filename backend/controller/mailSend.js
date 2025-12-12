@@ -1,50 +1,55 @@
 import nodemailer from "nodemailer";
+import Contact from "../models/Enquiry.js";
 
-export const mailSend = async (req, res) => {
-  const { name, email, phone, message, projectType } = req.body;
 
-  console.log(name, email, phone, message, projectType);
-
-  const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    port: 2525,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
+export const contactSubmit = async (req, res) => {
+  const { fullName, email, phone, message, project } = req.body;
 
   try {
+    // ---------------- SAVE IN DATABASE ---------------- //
+    const newContact = await Contact.create({
+      fullName,
+      email,
+      phone,
+      message,
+      project: project || "",
+    });
+ 
+    // ---------------- SEND EMAIL ---------------- //
+    const transporter = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
     let htmlTemplate = "";
 
-    //  CASE 1: Project Selected (projectType exists)
-    if (projectType) {
+    // CASE 1: Project Selected
+    if (project) {
       htmlTemplate = `
       <div style="font-family: Arial, sans-serif; padding: 20px; background:#f7f7f7;">
         <div style="max-width: 600px; margin: auto; background:#ffffff; padding: 20px; border-radius: 10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
 
           <h2 style="color:#C29A2D; margin-bottom: 15px;">📩 New Project Enquiry</h2>
 
-          <p style="font-size: 15px; color:#333;"><strong>Name:</strong> ${name}</p>
-          <p style="font-size: 15px; color:#333;"><strong>Email:</strong> ${email}</p>
-          <p style="font-size: 15px; color:#333;"><strong>Phone:</strong> ${phone}</p>
-
-          <p style="font-size: 15px; color:#333;"><strong>Selected Project:</strong> ${projectType}</p>
+          <p><strong>Name:</strong> ${fullName}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Project:</strong> ${project}</p>
 
           <div style="margin-top: 15px; padding:15px; background:#fafafa; border-left: 4px solid #C29A2D;">
-            <p style="font-size: 15px; color:#333; margin:0;"><strong>Message:</strong></p>
-            <p style="font-size: 15px; color:#555; white-space:pre-line;">${message}</p>
+            <p><strong>Message:</strong></p>
+            <p style="white-space: pre-line;">${message}</p>
           </div>
-
-          <p style="margin-top: 25px; font-size:13px; color:#777;">
-            — This email was sent automatically from the Website Project Enquiry Form.
-          </p>
 
         </div>
       </div>`;
     }
 
-    //  CASE 2: No project (Normal Enquiry)
+    // CASE 2: No Project (General Enquiry)
     else {
       htmlTemplate = `
       <div style="font-family: Arial, sans-serif; padding: 20px; background:#f7f7f7;">
@@ -52,35 +57,56 @@ export const mailSend = async (req, res) => {
 
           <h2 style="color:#C29A2D; margin-bottom: 15px;">📩 New General Enquiry</h2>
 
-          <p style="font-size: 15px; color:#333;"><strong>Name:</strong> ${name}</p>
-          <p style="font-size: 15px; color:#333;"><strong>Email:</strong> ${email}</p>
-          <p style="font-size: 15px; color:#333;"><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Name:</strong> ${fullName}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
 
           <div style="margin-top: 15px; padding:15px; background:#fafafa; border-left: 4px solid #C29A2D;">
-            <p style="font-size: 15px; color:#333; margin:0;"><strong>Message:</strong></p>
-            <p style="font-size: 15px; color:#555; white-space:pre-line;">${message}</p>
+            <p><strong>Message:</strong></p>
+            <p style="white-space: pre-line;">${message}</p>
           </div>
-
-          <p style="margin-top: 25px; font-size:13px; color:#777;">
-            — This email was sent automatically from the Website Contact Form.
-          </p>
 
         </div>
       </div>`;
     }
 
-    //  Send Email
     await transporter.sendMail({
-      from: `"${name}" <${email}>`,
+      from: `"${fullName}" <${email}>`,
       to: "1bhaveshjaswani1@gmail.com",
-      subject: projectType ? `Enquiry - ${projectType}` : "General Enquiry",
+      subject: project ? `Enquiry - ${project}` : "General Enquiry",
       html: htmlTemplate,
     });
 
-    res.status(200).json({ success: true, message: "Email sent successfully!" });
+    res.status(200).json({
+      success: true,
+      message: "Message sent successfully!",
+      data: newContact,
+    });
 
   } catch (error) {
-    console.log(error, "SMTP Error");
-    res.status(500).json({ success: false, message: "Error sending email", error });
+    console.log("Contact Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error processing request",
+      error,
+    });
+  }
+};
+
+export const getAllContacts = async (req, res) => {
+  try {
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: contacts.length,
+      data: contacts,
+    });
+  } catch (error) {
+    console.error("Get Contacts Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch contacts",
+    });
   }
 };

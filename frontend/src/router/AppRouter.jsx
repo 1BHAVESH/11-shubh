@@ -31,6 +31,10 @@ import JoinVenture from "@/pages/JoinVenture";
 import CarrerAdmin from "@/pages/admin/CareerAdmin";
 import AdminFaq from "@/pages/admin/adminFaqs";
 import PolicyEditor from "@/pages/admin/PrivecyPolicy";
+import GeneralSettings from "@/pages/admin/GenralSettings";
+import ProfileDropdown from "@/components/admin/AdminProfile";
+import Profile from "@/pages/admin/Profile";
+import ForgotPassword from "@/pages/admin/ForgotPassword";
 
 export default function AppRoutes() {
   return (
@@ -60,7 +64,9 @@ export default function AppRoutes() {
 
         {/* ADMIN ROUTES */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/register" element={<AdminRegister />} />
+          <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+
+        {/* <Route path="/admin/register" element={<AdminRegister />} /> */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="banners" element={<BannerManagement />} />
@@ -69,6 +75,8 @@ export default function AppRoutes() {
           <Route path="career" element={<CarrerAdmin />} />
           <Route path="faq" element={<AdminFaq />} />
           <Route path="privacy-policy" element={<PolicyEditor />} />
+          <Route path="genral-settings" element={<GeneralSettings />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

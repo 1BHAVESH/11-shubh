@@ -4,15 +4,17 @@ import { useGetProjectsQuery } from "@/redux/features/adminApi";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 
-const API_URL=import.meta.env.VITE_API_URL ||" http://localhost:3001/"
-
+const API_URL = import.meta.env.VITE_API_URL || " http://localhost:3001/";
 
 export default function Projects() {
   const navigate = useNavigate();
   const { data: projectsData, isLoading } = useGetProjectsQuery();
-  const projects = projectsData?.data || [];
+  const allProjects = projectsData?.data || [];
+  
+  // Filter only active projects
+  const projects = allProjects.filter(project => project.isActive !== false);
 
-  //console.log(projects);
+  // console.log(projects);
 
   if (isLoading) {
     return (
@@ -54,7 +56,7 @@ export default function Projects() {
                 alt={project.title}
                 className="w-full h-[380px] object-cover cursor-pointer"
               />
-              
+
               {/* Content overlay at bottom */}
               <div className="absolute bottom-0 left-0 right-0 bg-white px-6 py-5 flex items-end justify-between">
                 <div onClick={() => navigate(`/project/${project._id}`)} className="cursor-pointer">
@@ -65,7 +67,7 @@ export default function Projects() {
                     {project.location}
                   </p>
                 </div>
-                
+
                 <div className="flex gap-3 flex-shrink-0">
                   {project.brochureUrl && (
                     <Button
@@ -99,8 +101,8 @@ export default function Projects() {
     );
   }
 
-  // Show horizontal layout if more than 5 projects
-  if (projects.length  > 4) {
+  // Show horizontal layout if more than 4 projects
+  if (projects.length > 4) {
     return (
       <section className="max-w-[1370px] mx-auto px-6 lg:px-12 py-16">
         <div className="mb-5">
